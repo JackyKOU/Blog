@@ -10,7 +10,10 @@ namespace Blog.NetCore.Controllers
     [ApiController]
     public class ValuesController : ControllerBase
     {
-        // GET api/values
+        /// <summary>
+        /// this is a comment for api method
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
