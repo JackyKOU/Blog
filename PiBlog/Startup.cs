@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using PiBlog.Core.DataBase;
+using PiBlog.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 namespace PiBlog
 {
@@ -27,10 +27,10 @@ namespace PiBlog
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddDbContext<PiDbContext>(options=>{
-                var connectionString = Configuration.GetConnectionString("DefaultConnection");
-                options.UseSqlite(connectionString);
-            });
+            // services.AddDbContext<PiDbContext>(options=>{
+            //     var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            //     options.UseSqlite(connectionString);
+            // });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
