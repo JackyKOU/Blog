@@ -32,5 +32,10 @@ namespace PiBlog.Dto
         {
             this.Data = data;
         }
+
+        public Response()
+        {
+            
+        }
     }
 }

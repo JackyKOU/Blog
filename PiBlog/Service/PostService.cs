@@ -39,5 +39,36 @@ namespace PiBlog.Service
             var pagePostList = new PaginatedList<PostDto>(input.PageSize,input.PageSize,count,queryPosts);
             return pagePostList;                  
         }
+
+        public async Task<BlogDetailDto> GetBlogDetail(int id)
+        {
+            var post = await _piDbContext.Posts.FirstOrDefaultAsync(x=>x.Id == id);
+            if(null == post)
+                return null;
+            
+            var prevPost = await _piDbContext.Posts
+                                         .Where(x => x.CreationTime > post.CreationTime)
+                                         .Take(1)
+                                         .FirstOrDefaultAsync();
+            var nextPost = await _piDbContext.Posts
+                                     .Where(x => x.CreationTime < post.CreationTime)
+                                     .OrderByDescending(x => x.CreationTime)
+                                     .Take(1)
+                                     .FirstOrDefaultAsync();
+            
+            var result = new BlogDetailDto(){
+                Id = post.Id,
+                Author = post.Author,
+                Body = post.Body,
+                CreationTime = post.CreationTime,
+                prevId =  prevPost == null ? -1: prevPost.Id,
+                prevTitle = prevPost == null ? null: prevPost.Title,
+                nextId = nextPost == null? -1:nextPost.Id,
+                nextTitle = nextPost == null? null: nextPost.Title
+
+            };
+
+            return result;
+        }
     }
 }

@@ -28,5 +28,22 @@ namespace PiBlog.Controllers
             var resp = new Response<PaginatedList<PostDto>>(posts);
             return Ok(resp);
         }
+
+        [HttpGet("{id}")]
+        [ResponseCache(CacheProfileName="default")]
+        public async Task<IActionResult>Get(int id)
+        {
+            var resp = new Response<BlogDetailDto>();
+            var detalBlog = await _postService.GetBlogDetail(id);
+            if(detalBlog == null)
+            {
+                resp.Msg = $"Can not find blog by id:{id}";
+                return NotFound(resp);
+            }
+
+            resp.Data = detalBlog;
+            return Ok(resp);
+        }
+
     }
 }

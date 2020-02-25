@@ -11,5 +11,7 @@ namespace PiBlog.Interface
     public interface IPostService
     {
         Task<PaginatedList<PostDto>> GetPostList(QueryParameter input);
+
+        Task<BlogDetailDto> GetBlogDetail(int id);
     }
 }
