@@ -58,6 +58,7 @@ namespace PiBlog.Service
             
             var result = new BlogDetailDto(){
                 Id = post.Id,
+                Title = post.Title,
                 Author = post.Author,
                 Body = post.Body,
                 CreationTime = post.CreationTime,

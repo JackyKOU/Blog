@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -9,11 +10,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
 using PiBlog.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using PiBlog.Interface;
 using PiBlog.Service;
+using PiBlog.Configuations;
+
 namespace PiBlog
 {
     public class Startup
@@ -30,12 +35,38 @@ namespace PiBlog
         {
             services.AddControllers();
             services.AddDbContext<PiDbContext>(options=>{
-                var connectionString = Configuration.GetConnectionString("DefaultConnection");
-                options.UseSqlite(connectionString);
+                options.UseSqlite(AppSettings.SqliteConnectionString);
             });
 
             services.AddScoped<IPostService,PostService>();
-
+            services.AddRouting(options=>
+            {
+                options.LowercaseUrls = true;
+                options.AppendTrailingSlash = true;
+            });
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options=>
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            // 是否验证颁发者
+                            ValidateIssuer = true,
+                            // 是否验证访问群体
+                            ValidateAudience = true,
+                            // 是否验证生存期
+                            ValidateLifetime = true,
+                            // 验证Token的时间偏移量
+                            ClockSkew = TimeSpan.FromSeconds(30),
+                            // 是否验证安全密钥
+                            ValidateIssuerSigningKey = true,
+                            // 访问群体
+                            ValidAudience = AppSettings.JWT.Domain,
+                            // 颁发者
+                            ValidIssuer = AppSettings.JWT.Domain,
+                            // 安全密钥
+                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AppSettings.JWT.SecurityKey))
+                        };
+                    });
             // 添加响应缓存
             services.AddResponseCaching();
             // MVC服务
