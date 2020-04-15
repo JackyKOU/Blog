@@ -1,104 +1,110 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using PiBlog.Configuations;
 using PiBlog.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using PiBlog.Interface;
 using PiBlog.Service;
-using PiBlog.Configuations;
 
-namespace PiBlog
-{
-    public class Startup
-    {
-        public Startup(IConfiguration configuration)
-        {
+namespace PiBlog {
+    public class Startup {
+        public Startup (IConfiguration configuration) {
             Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllers();
-            services.AddDbContext<PiDbContext>(options=>{
-                options.UseSqlite(AppSettings.SqliteConnectionString);
-            });
+        public void ConfigureServices (IServiceCollection services) {
 
-            services.AddScoped<IPostService,PostService>();
-            services.AddRouting(options=>
-            {
-                options.LowercaseUrls = true;
-                options.AppendTrailingSlash = true;
+            services.AddControllers ().AddNewtonsoftJson ();
+            services.AddDbContext<PiDbContext> (options => {
+                options.UseSqlite (AppSettings.SqliteConnectionString);
             });
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(options=>
-                    {
-                        options.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            // 是否验证颁发者
-                            ValidateIssuer = true,
-                            // 是否验证访问群体
-                            ValidateAudience = true,
-                            // 是否验证生存期
-                            ValidateLifetime = true,
-                            // 验证Token的时间偏移量
-                            ClockSkew = TimeSpan.FromSeconds(30),
-                            // 是否验证安全密钥
-                            ValidateIssuerSigningKey = true,
-                            // 访问群体
-                            ValidAudience = AppSettings.JWT.Domain,
-                            // 颁发者
-                            ValidIssuer = AppSettings.JWT.Domain,
-                            // 安全密钥
-                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AppSettings.JWT.SecurityKey))
-                        };
-                    });
-            // 添加响应缓存
-            services.AddResponseCaching();
-            // MVC服务
-            services.AddMvcCore(options =>
-            {
-                // 添加一条响应缓存的默认配置
-                options.CacheProfiles.Add("default", new CacheProfile { Duration = 100 });
-            }).SetCompatibilityVersion(CompatibilityVersion.Latest);
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor> ();
+            services.AddScoped<IPostService, PostService> ();
 
-            // Http请求
-            services.AddHttpClient();
+            services.AddAuthentication (opts => {
+                opts.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                opts.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddCookie (options => {
+                options.LoginPath = "/signin";
+                options.LogoutPath = "/signout";
+            }).AddJwtBearer (JwtBearerDefaults.AuthenticationScheme, options => {
+                options.Audience = AppSettings.JWT.Audience;
+
+                options.TokenValidationParameters = new TokenValidationParameters {
+                    // The signing key must match!
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey (
+                    Encoding.UTF8.GetBytes (AppSettings.JWT.SecurityKey)),
+
+                    // Validate the JWT Issuer (iss) claim
+                    ValidateIssuer = true,
+                    ValidIssuer = AppSettings.JWT.Issuer,
+
+                    // Validate the JWT Audience (aud) claim
+                    ValidateAudience = true,
+                    ValidAudience = AppSettings.JWT.Audience,
+
+                    // Validate the token expiry
+                    ValidateLifetime = true,
+
+                    // If you want to allow a certain amount of clock drift, set that here
+                    //ClockSkew = TimeSpan.Zero
+                };
+            }).AddGitHub (options => {
+                options.ClientId = AppSettings.GitHub.Client_ID;
+                options.ClientSecret = AppSettings.GitHub.Client_Secret;
+                //options.CallbackPath = new PathString("~/signin-github");//same as github develop setting CallBackPath，default is /signin-github
+                options.Scope.Add ("user:email");
+
+            }).AddGoogle (options => {
+                options.ClientId = AppSettings.Google.Client_ID;
+                options.ClientSecret = AppSettings.Google.Client_Secret;
+                //options.CallbackPath = new PathString("~/signin-google");//same as google develop setting CallBackPath，default is /signin-google
+            });;
+            // services.AddCors();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
+        public void Configure (IApplicationBuilder app, IWebHostEnvironment env) {
+            if (env.IsDevelopment ()) {
+                app.UseDeveloperExceptionPage ();
             }
 
-            app.UseHttpsRedirection();
+            app.UseHttpsRedirection ();
 
-            app.UseRouting();
+            app.UseRouting ();
 
-            app.UseAuthorization();
+            // app.UseCors (builder => {
+            //     string[] withOrigins = Configuration.GetSection ("WithOrigins").Get<string[]> ();
 
-            app.UseResponseCaching();
+            //     builder.AllowAnyHeader ().AllowAnyMethod ().AllowCredentials ().WithOrigins (withOrigins);
+            // });
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
+            app.UseAuthentication ();
+            app.UseAuthorization ();
+
+            app.UseEndpoints (endpoints => {
+                endpoints.MapControllers ();
             });
         }
     }

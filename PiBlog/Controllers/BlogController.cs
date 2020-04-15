@@ -7,7 +7,7 @@ using PiBlog.Interface;
 
 namespace PiBlog.Controllers
 {
-    [Route("api/blog")]
+    [Route("[controller]")]
     [Produces("application/json")]
     public class BlogController:ControllerBase
     {
@@ -34,14 +34,14 @@ namespace PiBlog.Controllers
         public async Task<IActionResult>Get(int id)
         {
             var resp = new Response<BlogDetailDto>();
-            var detalBlog = await _postService.GetBlogDetail(id);
-            if(detalBlog == null)
+            var detailBlog = await _postService.GetBlogDetail(id);
+            if(detailBlog == null)
             {
                 resp.Msg = $"Can not find blog by id:{id}";
                 return NotFound(resp);
             }
 
-            resp.Data = detalBlog;
+            resp.Content = detailBlog;
             return Ok(resp);
         }
 

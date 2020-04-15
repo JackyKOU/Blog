@@ -26,11 +26,11 @@ namespace PiBlog.Dto
 
     public class Response<T> : Response where T : class
     {
-        public T Data { get; set; }
+        public T Content { get; set; }
 
         public Response(T data)
         {
-            this.Data = data;
+            this.Content = data;
         }
 
         public Response()

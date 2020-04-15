@@ -11,7 +11,7 @@ namespace PiBlog.Configuations
         static AppSettings()
         {
             var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
-                                                    .AddJsonFile("Resources/appsettings.json",true,true);
+                                                    .AddJsonFile("appsettings.json",true,true);
             _config =builder.Build();
         }
 
@@ -35,6 +35,10 @@ namespace PiBlog.Configuations
             public static string SecurityKey => _config["JWT:SecurityKey"];
 
             public static int Expires => Convert.ToInt32(_config["JWT:Expires"]);
+
+            public static string Issuer =>_config["JWT:Issuer"];
+
+            public static string Audience=>_config["JWT:Audience"];
         }
 
         /// <summary>
@@ -51,6 +55,12 @@ namespace PiBlog.Configuations
             public static string Redirect_Uri => _config["Github:RedirectUri"];
 
             public static string ApplicationName => _config["Github:ApplicationName"];
+        }
+
+        public static class Google{
+             public static string Client_ID => _config["Google:ClientID"];
+
+            public static string Client_Secret => _config["Google:ClientSecret"];
         }
 
     }

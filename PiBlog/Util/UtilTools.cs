@@ -10,6 +10,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 namespace PiBlog.Util
 {
     public static class UtilTools
@@ -217,5 +220,7 @@ namespace PiBlog.Util
             var ticks = 621355968000000000 + long.Parse(timestamp) * 10000;
             return new DateTime(ticks);
         }
+
+    
     }
 }

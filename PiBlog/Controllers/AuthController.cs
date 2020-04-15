@@ -1,11 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using AspNet.Security.OAuth.GitHub;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
@@ -15,128 +20,92 @@ using PiBlog.Dto.Blog;
 using PiBlog.Interface;
 using PiBlog.Configuations;
 using PiBlog.Util;
+
 namespace PiBlog.Controllers
 {
     [ApiController]
     [AllowAnonymous]
-    [Route("api/auth")]
+    [Route("[controller]")]
     [Produces("application/json")]
     public class AuthController:ControllerBase
     {
-        private readonly IHttpClientFactory _httpClient;
-        public AuthController(IHttpClientFactory httpClient)
+        private readonly IHttpContextAccessor _contextAccessor;
+        private const string LoginProviderKey = "LoginProvider";
+
+        private readonly IConfiguration _configuration;
+        public AuthController(IHttpContextAccessor contextAccessor,IConfiguration configuration)
         {
-            _httpClient = httpClient;
+            _contextAccessor = contextAccessor;
+            _configuration = configuration;
         }
 
         /// <summary>
         /// Get Github login url
         /// </summary>
         /// <returns></returns>
-        [HttpGet]
-        [Route("login")]
-        public async Task<IActionResult>GetGithubLoginUrl()
+        [HttpGet("~/signin")]
+        // [HttpGet]
+        // [Route("signin")]
+        public async Task<IActionResult>SigninGithubAccount(string provider,string redirectUrl)
         {
-            var resp = new Response<string>();
-            resp.Data = string.Concat(new string[]
+            // Note: the "provider" parameter corresponds to the external
+            // authentication provider choosen by the user agent.
+            if (string.IsNullOrWhiteSpace(provider))
             {
-                GitHubConfig.API_Authorize,
-                "?client_id=",GitHubConfig.Client_ID,
-                "&scope=",GitHubConfig.API_Scope,
-                "&state=",Guid.NewGuid().ToString("N"),
-                "&redirect_uri=",GitHubConfig.Redirect_Uri
-            });
-            
-            return await Task.FromResult(Ok(resp));
-        }
+                return BadRequest();
+            }
 
+            if(!await this.HttpContext.IsProviderSupportedAsync(provider))
+            {
+                return BadRequest();
+            }
+
+            var request = _contextAccessor.HttpContext.Request;
+            var url =
+                $"{request.Scheme}://{request.Host}{request.PathBase}{request.Path}-callback?provider={provider}&redirectUrl={redirectUrl}";
+            var properties = new AuthenticationProperties { RedirectUri = url };
+            properties.Items[LoginProviderKey] = provider;
+            return Challenge(properties, provider);
+        }
 
         /// <summary>
-        /// 
+        /// 授权成功后自动回调的地址
         /// </summary>
-        /// <param name="code"></param>
+        /// <param name="provider"></param>
+        /// <param name="redirectUrl">授权成功后的跳转地址</param>
         /// <returns></returns>
-        [HttpGet]
-        [Route("access_token")]
-        public async Task<IActionResult> GetAccessToken(string code)
+        // [HttpGet]
+        // [Route("signin-callback")]
+        [HttpGet("~/signin-callback")]
+        public async Task<IActionResult> SigninGithubCallBack(string provider = null, string redirectUrl = "")
         {
-            var resp = new Response<string>();
-            if(string.IsNullOrEmpty(code))
-            {
-                resp.Msg = "code is null or empty";
-                return Ok(resp);
-            }
+            var authenticateResult = await _contextAccessor.HttpContext.AuthenticateAsync(provider);
+            if (!authenticateResult.Succeeded) return Redirect(redirectUrl);
+            var openIdClaim = authenticateResult.Principal.FindFirst(ClaimTypes.NameIdentifier);
+            if (openIdClaim == null || string.IsNullOrWhiteSpace(openIdClaim.Value))
+                return Redirect(redirectUrl);
 
-            var content = new StringContent($"code={code}&client_id={GitHubConfig.Client_ID}&redirect_uri={GitHubConfig.Redirect_Uri}&client_secret={GitHubConfig.Client_Secret}");
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-            var client = _httpClient.CreateClient();
-            var httpResponse = await client.PostAsync(GitHubConfig.API_AccessToken,content);
-            var result =  await httpResponse.Content.ReadAsStringAsync();
-            if(result.StartsWith("access_token"))
-                resp.Data = result.Split("=")[1].Split("&").First();
-            else
-                resp.Msg = "code is not correct";
+            string token = this.CreateToken(authenticateResult.Principal);
 
-            return Ok(resp);
+            return Redirect($"{redirectUrl}?token={token}");
         }
-
-        [HttpGet]
-        [Route("token")]
-        public async Task<IActionResult> GenerateToken(string access_token)
+        
+        private string CreateToken(ClaimsPrincipal claimsPrincipal)
         {
-            var resp = new Response<string>();
-
-            if(string.IsNullOrEmpty(access_token))
-            {
-                resp.Msg = "access_token is empty";
-                return Ok(resp);
-            }
-
-            var url = $"{GitHubConfig.API_User}?access_token={access_token}";
-            var client = _httpClient.CreateClient();
-            client.DefaultRequestHeaders.Add("user-agent","Mozilla/5.0");
-            var httpResponse = await client.GetAsync(url);
-            if(httpResponse.StatusCode!=HttpStatusCode.OK)
-            {
-                resp.Msg = "access_token is not correct";
-                return Ok(resp);
-            }
-
-            var content = await httpResponse.Content.ReadAsStringAsync();
-            var user = content.DeserializeFromJson<UserResponse>();
-            if(user == null)
-            {
-                resp.Msg = "Not get user data";
-                return Ok(resp);
-            }
-
-            if(user.id!=GitHubConfig.Id)
-            {
-                resp.Msg = "Account not be authorized";
-                return Ok(resp);
-            }
-
-            var claims = new[]{
-                new Claim(ClaimTypes.Name, user.name),
-                new Claim(ClaimTypes.Email, user.email),
-                //it is the expir date , set to AppSettings.JWT.Expires
-                new Claim(JwtRegisteredClaimNames.Exp,$"{new DateTimeOffset(DateTime.Now.AddMinutes(AppSettings.JWT.Expires)).ToUnixTimeSeconds()}"),
-                new Claim(JwtRegisteredClaimNames.Nbf,$"{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}")
-            };
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AppSettings.JWT.SecurityKey));
-            var creds = new SigningCredentials(key,SecurityAlgorithms.HmacSha256);
+            var handler = new JwtSecurityTokenHandler();
+            //The algorithm: 'HS256' requires the SecurityKey.KeySize to be greater than '128' bits
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(AppSettings.JWT.SecurityKey));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
-                issuer:AppSettings.JWT.Domain,
-                audience:AppSettings.JWT.Domain,
-                claims:claims,
+                AppSettings.JWT.Issuer,
+                AppSettings.JWT.Audience,
+                claimsPrincipal.Claims,
                 expires: DateTime.Now.AddMinutes(AppSettings.JWT.Expires),
-                signingCredentials:creds
+                signingCredentials: credentials
             );
 
-            var result = new JwtSecurityTokenHandler().WriteToken(token);
-            resp.Data = result;
-            return Ok(resp);
-
+            return handler.WriteToken(token);
         }
     }
 }
