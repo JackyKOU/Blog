@@ -13,5 +13,9 @@ namespace PiBlog.Interface
         Task<PaginatedList<PostDto>> GetPostList(QueryParameter input);
 
         Task<BlogDetailDto> GetBlogDetail(int id);
+
+        Task<ErrorCode> AddPost(PostDto post);
+        Task<ErrorCode> UpdatePost(PostDto post);
+        Task<ErrorCode>DeletePost(int id);
     }
 }

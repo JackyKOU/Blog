@@ -71,5 +71,89 @@ namespace PiBlog.Service
 
             return result;
         }
+
+        public async Task<ErrorCode> AddPost(PostDto post)
+        {
+            if(null == post)
+            {
+                return ErrorCode.OBJECT_NULL;
+            }
+
+            var newPost = new Post(){
+                Title = post.Title,
+                Author = post.Author,
+                Body = post.Body,
+                CreationTime = post.CreationTime
+            };
+
+
+            try{
+                await _piDbContext.Posts.AddAsync(newPost);
+                await _piDbContext.SaveChangesAsync();
+                post.Id = newPost.Id;
+            }catch(Exception exp)
+            {
+                //log exp
+                return ErrorCode.DB_OPERATION_ERR;
+            }
+
+            return ErrorCode.OK;
+        }
+
+        public async Task<ErrorCode> UpdatePost(PostDto post)
+        {
+            if(null == post)
+            {
+                return ErrorCode.OBJECT_NULL;
+            }
+
+            var oldPost = await _piDbContext.Posts.FirstOrDefaultAsync(x=>x.Id == post.Id);
+            
+            if(null == oldPost)
+            {
+                return ErrorCode.NOT_FOUND;
+            }
+
+            var newPost = new Post(){
+                Id = post.Id,
+                Title = post.Title,
+                Author = post.Author,
+                Body = post.Body,
+                CreationTime = post.CreationTime
+            };
+
+
+            try{
+                _piDbContext.Posts.Update(newPost);
+                await _piDbContext.SaveChangesAsync();
+            }catch(Exception exp)
+            {
+                //log exp
+                return ErrorCode.DB_OPERATION_ERR;
+
+            }
+
+            return ErrorCode.OK;
+        }
+
+        public async Task<ErrorCode>DeletePost(int id)
+        {
+            var post = await _piDbContext.Posts.FindAsync(id);
+            if(null == post)
+            {
+                return ErrorCode.OBJECT_NULL;
+            }
+
+            try{
+                _piDbContext.Posts.Remove(post);
+                await _piDbContext.SaveChangesAsync();
+            }catch(Exception exp)
+            {
+                //log exp
+                return ErrorCode.NOT_FOUND;
+            }
+
+            return ErrorCode.OK;
+        }
     }
 }
