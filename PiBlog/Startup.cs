@@ -80,7 +80,7 @@ namespace PiBlog {
                 options.ClientSecret = AppSettings.Google.Client_Secret;
                 //options.CallbackPath = new PathString("~/signin-google");//same as google develop setting CallBackPath，default is /signin-google
             });;
-            // services.AddCors();
+            services.AddCors();
 
             services.AddResponseCaching();
             // MVC??
@@ -101,11 +101,11 @@ namespace PiBlog {
 
             app.UseRouting ();
 
-            // app.UseCors (builder => {
-            //     string[] withOrigins = Configuration.GetSection ("WithOrigins").Get<string[]> ();
+            app.UseCors (builder => {
+                string[] withOrigins = Configuration.GetSection ("WithOrigins").Get<string[]> ();
 
-            //     builder.AllowAnyHeader ().AllowAnyMethod ().AllowCredentials ().WithOrigins (withOrigins);
-            // });
+                builder.AllowAnyHeader ().AllowAnyMethod ().AllowCredentials ().WithOrigins (withOrigins);
+            });
 
             app.UseAuthentication ();
             app.UseAuthorization ();

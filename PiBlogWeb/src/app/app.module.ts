@@ -5,6 +5,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HomePageComponent } from './home-page/home-page.component';
 import { PostCardComponent } from './post-card/post-card.component';
+import { HttpClientModule } from '@angular/common/http';
+import{PostsService} from './posts.service';
 
 @NgModule({
   declarations: [
@@ -14,9 +16,12 @@ import { PostCardComponent } from './post-card/post-card.component';
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    HttpClientModule
   ],
-  providers: [],
+  providers: [
+    PostsService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

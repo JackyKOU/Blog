@@ -3,6 +3,7 @@ export interface Post{
     Title:String;
     Author:String;
     Body:String;
+    Summary:String;
     CreationTime:Date;
 }
 
@@ -24,4 +25,9 @@ export interface Response<T>
     Success:Boolean;
     Timestamp:Date;
     Content: T;
+}
+
+export interface PostsQueryParameters{
+    Page:Number;
+    Limit:Number;
 }
