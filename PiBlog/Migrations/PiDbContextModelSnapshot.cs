@@ -14,7 +14,7 @@ namespace PiBlog.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.1");
+                .HasAnnotation("ProductVersion", "3.1.3");
 
             modelBuilder.Entity("PiBlog.Model.Blog.Post", b =>
                 {
@@ -29,6 +29,9 @@ namespace PiBlog.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreationTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Summary")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")

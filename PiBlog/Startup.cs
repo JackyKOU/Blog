@@ -82,6 +82,13 @@ namespace PiBlog {
             });;
             // services.AddCors();
 
+            services.AddResponseCaching();
+            // MVC??
+            services.AddMvcCore(options =>
+            {
+                // ?????????????
+                options.CacheProfiles.Add("default", new CacheProfile { Duration = 100 });
+            }).SetCompatibilityVersion(CompatibilityVersion.Latest);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -102,6 +109,7 @@ namespace PiBlog {
 
             app.UseAuthentication ();
             app.UseAuthorization ();
+            app.UseResponseCaching();
 
             app.UseEndpoints (endpoints => {
                 endpoints.MapControllers ();

@@ -33,6 +33,7 @@ namespace PiBlog.Service
                                       Title = x.Title,
                                       Author = x.Author,
                                       Body = x.Body,
+                                      Summary = x.Summary,
                                       CreationTime = x.CreationTime
                                   }).ToList();
 
@@ -83,7 +84,8 @@ namespace PiBlog.Service
                 Title = post.Title,
                 Author = post.Author,
                 Body = post.Body,
-                CreationTime = post.CreationTime
+                CreationTime = post.CreationTime,
+                Summary = post.Summary
             };
 
 
@@ -119,7 +121,8 @@ namespace PiBlog.Service
                 Title = post.Title,
                 Author = post.Author,
                 Body = post.Body,
-                CreationTime = post.CreationTime
+                CreationTime = post.CreationTime,
+                Summary = post.Summary
             };
 
 

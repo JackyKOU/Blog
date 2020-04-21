@@ -22,14 +22,13 @@ namespace PiBlog.Infrastructure
                     Title = $"title_{i}",
                     Body = $"body_{i}",
                     Author = $"author_{i}",
+                    Summary = $"summary_{i}",
                     CreationTime = DateTime.Now.AddDays(-i),
                     };
 
                     Posts.Add(fakePost);
                     this.SaveChanges();
                 }
-
-                
             }
         }
     }
