@@ -9,10 +9,10 @@ namespace PiBlog.Dto.Blog
         public string Body { get; set; }
         public DateTime CreationTime { get; set; }
 
-        public string prevTitle { get; set; }
-        public int prevId { get; set; }
-        public string nextTitle { get; set; }
-        public int nextId { get; set; }
+        public string PrevTitle { get; set; }
+        public int PrevId { get; set; }
+        public string NextTitle { get; set; }
+        public int NextId { get; set; }
 
     }
 }

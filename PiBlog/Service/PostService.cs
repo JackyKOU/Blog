@@ -62,10 +62,10 @@ namespace PiBlog.Service
                 Author = post.Author,
                 Body = post.Body,
                 CreationTime = post.CreationTime,
-                prevId =  prevPost == null ? -1: prevPost.Id,
-                prevTitle = prevPost == null ? null: prevPost.Title,
-                nextId = nextPost == null? -1:nextPost.Id,
-                nextTitle = nextPost == null? null: nextPost.Title
+                PrevId =  prevPost == null ? -1: prevPost.Id,
+                PrevTitle = prevPost == null ? null: prevPost.Title,
+                NextId = nextPost == null? -1:nextPost.Id,
+                NextTitle = nextPost == null? null: nextPost.Title
 
             };
 
