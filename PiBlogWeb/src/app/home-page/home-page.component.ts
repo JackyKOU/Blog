@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {Post,PostsQueryParameters} from '../Shared/interface';
+import {Post,PostsQueryParameters,Response,PaginatedList} from '../Shared/interface';
 import {PostsService} from '../posts.service'
 @Component({
   selector: 'app-home-page',
@@ -8,7 +8,7 @@ import {PostsService} from '../posts.service'
 })
 export class HomePageComponent implements OnInit {
   posts:Post[];
-  postParameter:PostsQueryParameters = {Page :1,Limit : 10};
+  postParameter:PostsQueryParameters = {page :1,limit : 10};
 
   constructor(
     private postService:PostsService
@@ -16,8 +16,16 @@ export class HomePageComponent implements OnInit {
 
   ngOnInit(): void {
     this.postService.GetPagedPosts(this.postParameter).subscribe(
-      resp=>{
-        console.log(resp);
+      (resp:Response<PaginatedList<Post>>) =>{
+        if(!resp.success)
+        {
+          console.error(resp.msg);
+        }else{
+          this.posts = resp.content.dataList;
+          console.log(resp.content.pageCount);
+          console.log(resp.content.pageSize);
+        }
+
       }
     );
   }

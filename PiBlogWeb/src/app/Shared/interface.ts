@@ -1,33 +1,44 @@
 export interface Post{
-    Id:Number;
-    Title:String;
-    Author:String;
-    Body:String;
-    Summary:String;
-    CreationTime:Date;
+    id:Number;
+    title:String;
+    author:String;
+    body:String;
+    summary:String;
+    creationTime:Date;
 }
 
 export interface PostDetail{
-    Id:Number;
-    Title:String;
-    Author:String;
-    Body:String;
-    CreationTime:Date;
-    PrevTitle:String;
-    PrevId:Number;
-    NextTitle:String;
-    NextId:Number;
+    id:Number;
+    title:String;
+    author:String;
+    body:String;
+    creationTime:Date;
+    prevTitle:String;
+    prevId:Number;
+    nextTitle:String;
+    nextId:Number;
 }
 
 export interface Response<T>
 {
-    Msg:String;
-    Success:Boolean;
-    Timestamp:Date;
-    Content: T;
+    msg:String;
+    success:Boolean;
+    timestamp:Date;
+    content: T;
 }
 
 export interface PostsQueryParameters{
-    Page:Number;
-    Limit:Number;
+    page:Number;
+    limit:Number;
+}
+
+export interface PaginatedList<T>
+{
+    pageSize:Number;
+    pageIndex:Number;
+    totalItemCount:Number;
+    pageCount:Number;
+    hasPrevious:Boolean;
+    hasNext:Boolean;
+    dataList:Array<T>
 }

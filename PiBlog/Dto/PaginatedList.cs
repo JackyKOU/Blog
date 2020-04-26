@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 namespace PiBlog.Dto
 {
-    public class PaginatedList<T> : List<T>
+    public class PaginatedList<T>
     {
         public int PageSize { get; set; }
         public int PageIndex { get; set; }
@@ -27,12 +27,18 @@ namespace PiBlog.Dto
             get { return PageIndex < PageCount - 1; }
         }
 
+        public List<T> DataList
+        {
+            get;
+            set;
+        } = new List<T>();
+
         public PaginatedList(int pageIndex, int pageSize, int totalItemCount, List<T> dataList)
         {
             this.PageIndex = pageIndex;
             this.PageSize = pageSize;
             this.TotalItemCount = totalItemCount;
-            AddRange(dataList);
+            DataList.AddRange(dataList);
         }
     }
 }
